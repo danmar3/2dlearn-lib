@@ -3,7 +3,6 @@
 # used for training models
 # 
 # Created by: Daniel L. Marino (daniellml55@gmail.com)
-# Last modified: Jul-25-2016
 # 
 ############################################################################
 
