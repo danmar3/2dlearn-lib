@@ -6,7 +6,6 @@
 #
 # Created by: Daniel L. Marino (daniellml55@gmail.com)
 #
-# TODO: add saver for the networks
 ############################################################################
 
 
@@ -26,11 +25,11 @@ class AlexnetLayer(object):
         self.pool_size= pool_size
         self.weights = tf.Variable(
             tf.truncated_normal( [filter_size[0], filter_size[1], n_maps[0], n_maps[1]], stddev=0.1),
-            name= 'W_'+name
+            name= 'w'+name
         )
         
         self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.1),
-                                name= 'b_'+name
+                                name= 'b'+name
                                )
     def evaluate(self, input_tensor):
         # Perform Convolution
@@ -60,8 +59,8 @@ class FullyconnectedLayer(object):
         else:
             self.afunction= afunction
         
-        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W_'+name)
-        self.bias= tf.Variable(tf.truncated_normal([n_units], stddev=0.1), name= 'b_'+name)
+        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
+        self.bias= tf.Variable(tf.truncated_normal([n_units], stddev=0.1), name= 'b'+name)
         
         
     def evaluate(self, input_mat):
@@ -120,12 +119,12 @@ class ConvNet(object):
         # 1. Create the convolutional layers:
         self.conv_layers= list() 
         self.conv_layers.append( 
-            AlexnetLayer(filter_size[0], [n_input_maps, n_filters[0]], pool_size[0], name= 'conv_0'+name) 
+            AlexnetLayer(filter_size[0], [n_input_maps, n_filters[0]], pool_size[0], name= '0_conv_'+name) 
         )
         
         for l in range(1,len(n_filters)):
             self.conv_layers.append( 
-                AlexnetLayer(filter_size[l], [n_filters[l-1], n_filters[l]], pool_size[l], name= 'conv_'+str(l)+name) 
+                AlexnetLayer(filter_size[l], [n_filters[l-1], n_filters[l]], pool_size[l], name= str(l)+'_conv_'+name) 
             )
             
         # Get size after convolution phase
@@ -142,23 +141,41 @@ class ConvNet(object):
         # 2. Create the fully connected layers:        
         self.full_layers= list()
         self.full_layers.append( 
-            FullyconnectedLayer( final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name= 'full_0'+name) 
+            FullyconnectedLayer( final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name= '0_full_'+name) 
         )
         for l in range(1,len(n_hidden)):
             self.full_layers.append( 
-                FullyconnectedLayer(n_hidden[l-1], n_hidden[l], name= 'full_'+str(l)+name) 
+                FullyconnectedLayer(n_hidden[l-1], n_hidden[l], name= str(l)+'_full_'+name) 
             )
         
         # 3. Create the final layer:
         self.linear_weights= tf.Variable(
             tf.truncated_normal( [n_hidden[-1], n_outputs], stddev=0.1),
-            name= 'Wlin_'+name
+            name= 'wlin_'+name
         )
         
         self.linear_bias = tf.Variable(tf.truncated_normal([n_outputs], stddev=0.1),
                                 name= 'blin_'+name
                                )
-
+        
+        # 4. Define the saver for the weights of the network
+        saver_dict= dict()
+        for l in range(len(self.conv_layers)):
+            saver_dict['w'+str(l)+'_conv'] = self.conv_layers[l].weights 
+            saver_dict['b'+str(l)+'_conv'] = self.conv_layers[l].bias 
+            
+        for l in range(len(self.full_layers)):
+            saver_dict['w'+str(l)+'_full'] = self.full_layers[l].weights
+            saver_dict['b'+str(l)+'_full'] = self.full_layers[l].bias   
+            
+        saver_dict['wlin'] = self.linear_weights
+        saver_dict['blin'] = self.linear_bias
+        
+        
+        self.saver= tf.train.Saver(saver_dict)
+        
+        
+        
     def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None):
         ''' Defines the computation graph of the neural network for a specific batch size 
         
@@ -261,6 +278,18 @@ class MlpNet(object):
         self.linear_bias = tf.Variable(tf.truncated_normal([n_outputs], stddev=0.1),
                                 name= 'blin_'+name
                                )
+        
+        # 4. Define the saver for the weights of the network
+        saver_dict= dict()            
+        for l in range(len(self.full_layers)):
+            saver_dict['w'+str(l)+'_full'] = self.full_layers[l].weights
+            saver_dict['b'+str(l)+'_full'] = self.full_layers[l].bias   
+            
+        saver_dict['wlin'] = self.linear_weights
+        saver_dict['blin'] = self.linear_bias
+                
+        self.saver= tf.train.Saver(saver_dict)
+        
         
     def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None):
         ''' Defines the computation graph of the neural network for a specific batch size 
