@@ -1,0 +1,10 @@
+# ----- Python -----
+# byte-compiled
+*.pyc
+
+# checkpoints
+*checkpoint.ipynb
+
+# ----- data -----
+*.gz
+
