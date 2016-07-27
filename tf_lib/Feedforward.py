@@ -104,7 +104,7 @@ class ConvNet(object):
     def __init__(self, input_size, n_input_maps, n_outputs, 
                  n_filters, filter_size, 
                  pool_size, 
-                 n_hidden, 
+                 n_hidden= [], 
                  name=''):
         ''' All variables corresponding to the weights of the network are defined
         '''
@@ -126,7 +126,9 @@ class ConvNet(object):
             self.conv_layers.append( 
                 AlexnetLayer(filter_size[l], [n_filters[l-1], n_filters[l]], pool_size[l], name= str(l)+'_conv_'+name) 
             )
-            
+        
+        
+        
         # Get size after convolution phase
         final_size= [input_size[0], input_size[1]]
         for i in range(len(filter_size)):
@@ -139,37 +141,39 @@ class ConvNet(object):
             final_size[1]=1
         
         # 2. Create the fully connected layers:        
-        self.full_layers= list()
-        self.full_layers.append( 
-            FullyconnectedLayer( final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name= '0_full_'+name) 
-        )
-        for l in range(1,len(n_hidden)):
+        if len(n_hidden)>0:
+            self.full_layers= list()
             self.full_layers.append( 
-                FullyconnectedLayer(n_hidden[l-1], n_hidden[l], name= str(l)+'_full_'+name) 
+                FullyconnectedLayer( final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name= '0_full_'+name) 
             )
-        
-        # 3. Create the final layer:
-        self.linear_weights= tf.Variable(
-            tf.truncated_normal( [n_hidden[-1], n_outputs], stddev=0.1),
-            name= 'wlin_'+name
-        )
-        
-        self.linear_bias = tf.Variable(tf.truncated_normal([n_outputs], stddev=0.1),
-                                name= 'blin_'+name
-                               )
-        
+            for l in range(1,len(n_hidden)):
+                self.full_layers.append( 
+                    FullyconnectedLayer(n_hidden[l-1], n_hidden[l], name= str(l)+'_full_'+name) 
+                )
+
+            # 3. Create the final layer:
+            self.linear_weights= tf.Variable(
+                tf.truncated_normal( [n_hidden[-1], n_outputs], stddev=0.1),
+                name= 'wlin_'+name
+            )
+
+            self.linear_bias = tf.Variable(tf.truncated_normal([n_outputs], stddev=0.1),
+                                    name= 'blin_'+name
+                                   )
+
         # 4. Define the saver for the weights of the network
         saver_dict= dict()
         for l in range(len(self.conv_layers)):
             saver_dict['w'+str(l)+'_conv'] = self.conv_layers[l].weights 
             saver_dict['b'+str(l)+'_conv'] = self.conv_layers[l].bias 
-            
-        for l in range(len(self.full_layers)):
-            saver_dict['w'+str(l)+'_full'] = self.full_layers[l].weights
-            saver_dict['b'+str(l)+'_full'] = self.full_layers[l].bias   
-            
-        saver_dict['wlin'] = self.linear_weights
-        saver_dict['blin'] = self.linear_bias
+        
+        if len(n_hidden)!=0:
+            for l in range(len(self.full_layers)):
+                saver_dict['w'+str(l)+'_full'] = self.full_layers[l].weights
+                saver_dict['b'+str(l)+'_full'] = self.full_layers[l].bias   
+
+            saver_dict['wlin'] = self.linear_weights
+            saver_dict['blin'] = self.linear_bias
         
         
         self.saver= tf.train.Saver(saver_dict)
@@ -189,7 +193,10 @@ class ConvNet(object):
         inputs= tf.placeholder( tf.float32, 
                                 shape=(batch_size, self.input_size[0], self.input_size[1], self.n_input_maps ))
         
-        labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
+        if (loss_type is not None) or (len(self.n_hidden)==0):
+            labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
+        else:
+            labels= None
         
         
         # 1. convolution stage
@@ -198,11 +205,16 @@ class ConvNet(object):
             out= layer.evaluate(out)
                 
         # 2. fully connected stage
-        # reshape
+        # 2.1 reshape
         shape = out.get_shape().as_list()
         print('Shape of input matrix entering to Fully connected layers:', shape)
         out = tf.reshape(out, [shape[0], shape[1] * shape[2] * shape[3]])
-        # mlp
+        
+        # if no fully connected layers, return here:
+        if len(self.n_hidden)==0:
+            return NetConf(inputs, None, out, None)
+                
+        # 2.2 mlp
         for layer in self.full_layers:
             out = layer.evaluate(out)
             if drop_prob is not None:
@@ -291,7 +303,7 @@ class MlpNet(object):
         self.saver= tf.train.Saver(saver_dict)
         
         
-    def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None):
+    def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None, inputs= None):
         ''' Defines the computation graph of the neural network for a specific batch size 
         
         drop_prob: placeholder used for specify the probability for dropout. If this coefficient is set, then
@@ -301,8 +313,9 @@ class MlpNet(object):
                 - 'cross_entropy': for classification tasks
                 - 'l2': for regression tasks
         '''
-        inputs= tf.placeholder( tf.float32, 
-                                shape=(batch_size, self.n_inputs ))
+        if inputs is None:
+            inputs= tf.placeholder( tf.float32, 
+                                    shape=(batch_size, self.n_inputs ))
         
         labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
                 
