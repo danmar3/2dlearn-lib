@@ -90,7 +90,7 @@ class ConvNet(object):
     It performs a series of 2d Convolutions and pooling operations, then
     a standard fully connected stage and finaly a softmax
     
-    input_size: [size_dim0, size_dim1]
+    input_size: size of the input maps: [size_dim0, size_dim1]
     n_outputs: number of outputs
     n_input_maps: number of input maps
     n_filters: list with the number of filters for layer
@@ -99,6 +99,8 @@ class ConvNet(object):
     pool_size: list with the size of the pooling kernel foreach layer,
                the format for each layer is: [pool_size_dim0, pool_size_dim1]
     n_hidden: list with the number of units on each fully connected layer
+    
+    out_conv_shape: size of the output map from the convolution stage: [size_dim0, size_dim1]
     
     '''
     def __init__(self, input_size, n_input_maps, n_outputs, 
@@ -132,13 +134,15 @@ class ConvNet(object):
         # Get size after convolution phase
         final_size= [input_size[0], input_size[1]]
         for i in range(len(filter_size)):
-            final_size[0]= (final_size[0] - 2*(filter_size[i][0]//2))//pool_size[i][0]
-            final_size[1]= (final_size[1] - 2*(filter_size[i][1]//2))//pool_size[i][1]
+            final_size[0]= (final_size[0] - (filter_size[i][0]-1))//pool_size[i][0]
+            final_size[1]= (final_size[1] - (filter_size[i][1]-1))//pool_size[i][1]
         
         if final_size[0]==0:
             final_size[0]=1
         if final_size[1]==0:
             final_size[1]=1
+        self.out_conv_shape = final_size
+        print("Shape of the maps after convolution stage:", self.out_conv_shape)
         
         # 2. Create the fully connected layers:        
         if len(n_hidden)>0:
