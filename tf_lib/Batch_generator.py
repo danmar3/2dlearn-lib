@@ -14,7 +14,7 @@ def one_hot(labels, n_classes):
     if n_classes==2:
         return np.expand_dims(labels,1)
     else:
-        labels_out= np.zeros(labels.shape[0], n_classes)
+        labels_out= np.zeros((labels.shape[0], n_classes))
         for c in range(n_classes):
             labels_out[labels==c,c]= 1
 
@@ -106,7 +106,7 @@ class SeqMultiClassBatchGenerator(object):
         - window_size:
     '''
     
-    def __init__(self, data_in, batch_size, window_size, mrk= None, y= None, out_format='tensor'):
+    def __init__(self, data_in, batch_size, window_size, mrk= None, y= None, out_format='tensor', input_format=''):
         '''
         At the end of the initialization, data is structured as data[class][page]
         
@@ -145,12 +145,20 @@ class SeqMultiClassBatchGenerator(object):
             for c in range(len(self.data)):
                 self.bg_l.append( SeqBatchGenerator( self.data[c], batch_size, window_size, out_format) )
             
-        elif (type(data_in) is list) and (mrk is not None) and (y is None):
+        elif isinstance(data_in, list) and (mrk is None) and (y is None):
+            # input data is divided in classes 
+            # TODO: check that the elements of the input data list are matrices isinstance(data_in[c], array)
             self.n_classes= len(data_in)
-            self.data= [list() for i in self.n_clases] # Create a list for each class
+            self.data= [list() for i in range(self.n_classes)] # Create a list for each class
             
-            #TODO: continue!!!!!!
-        elif (type(data_in) is list) and (type(data_in[0]) is list) and (mrk is None) and (y is None):
+            self.bg_l= list()
+            print('OK')
+            for c in range(self.n_classes):
+                self.data[c].append(data_in[c])
+                self.bg_l.append( SeqBatchGenerator( self.data[c], batch_size, window_size, out_format) )
+            
+            
+        elif isinstance(data_in, list) and (type(data_in[0]) is list) and (mrk is None) and (y is None):
             self.n_classes= len(data_in)
             self.data= data_in
             
