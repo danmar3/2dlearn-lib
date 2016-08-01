@@ -31,6 +31,12 @@ class AlexnetLayer(object):
         self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.1),
                                 name= 'b'+name
                                )
+        
+        # define the saver dictionary with the training parameters
+        self.saver_dict= dict()
+        self.saver_dict['w'+name] =  self.weights
+        self.saver_dict['b'+name] =  self.bias
+        
     def evaluate(self, input_tensor):
         # Perform Convolution
         # the layers performs a 2D convolution, with a strides of 1
@@ -62,9 +68,32 @@ class FullyconnectedLayer(object):
         self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
         self.bias= tf.Variable(tf.truncated_normal([n_units], stddev=0.1), name= 'b'+name)
         
+        # define the saver dictionary with the training parameters
+        self.saver_dict= dict()
+        self.saver_dict['w'+name] =  self.weights
+        self.saver_dict['b'+name] =  self.bias
         
     def evaluate(self, input_mat):
         return self.afunction(tf.matmul(input_mat, self.weights) + self.bias)        
+    
+
+class LinearLayer(object):
+    '''Standard linear fully connected layer'''
+    def __init__(self, n_inputs, n_units, name=''):
+        self.n_inputs= n_inputs
+        self.n_units= n_units
+        
+        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
+        self.bias= tf.Variable(tf.truncated_normal([n_units], stddev=0.1), name= 'b'+name)
+        
+        # define the saver dictionary with the training parameters
+        self.saver_dict= dict()
+        self.saver_dict['w'+name] =  self.weights
+        self.saver_dict['b'+name] =  self.bias
+                
+    def evaluate(self, input_mat):
+        return tf.matmul(input_mat, self.weights) + self.bias
+    
 
 class NetConf(object):
     '''This is a wrapper to any network configuration, it contains the references to
@@ -156,29 +185,18 @@ class ConvNet(object):
                 )
 
             # 3. Create the final layer:
-            self.linear_weights= tf.Variable(
-                tf.truncated_normal( [n_hidden[-1], n_outputs], stddev=0.1),
-                name= 'wlin_'+name
-            )
-
-            self.linear_bias = tf.Variable(tf.truncated_normal([n_outputs], stddev=0.1),
-                                    name= 'blin_'+name
-                                   )
-
+            self.out_layer =  LinearLayer( n_hidden[-1], n_outputs, name= '_lin_'+name)
+            
         # 4. Define the saver for the weights of the network
         saver_dict= dict()
         for l in range(len(self.conv_layers)):
-            saver_dict['w'+str(l)+'_conv'] = self.conv_layers[l].weights 
-            saver_dict['b'+str(l)+'_conv'] = self.conv_layers[l].bias 
+            saver_dict.update( self.conv_layers[l].saver_dict )          
         
         if len(n_hidden)!=0:
             for l in range(len(self.full_layers)):
-                saver_dict['w'+str(l)+'_full'] = self.full_layers[l].weights
-                saver_dict['b'+str(l)+'_full'] = self.full_layers[l].bias   
-
-            saver_dict['wlin'] = self.linear_weights
-            saver_dict['blin'] = self.linear_bias
-        
+                saver_dict.update( self.full_layers[l].saver_dict )               
+                
+            saver_dict.update( self.out_layer.saver_dict )            
         
         self.saver= tf.train.Saver(saver_dict)
         
@@ -225,7 +243,7 @@ class ConvNet(object):
                 out = tf.nn.dropout(out, drop_prob)
         
         # 3. linear stage
-        y = tf.matmul(out, self.linear_weights) + self.linear_bias
+        y = self.out_layer.evaluate(out)
         
         # 4. loss # TODO: add number of parameters to loss so hyperparameters are more easy to tune, also put None as default and do not calculate loss if it is None
         # l2 regularizer 
@@ -257,6 +275,7 @@ class MlpNet(object):
         full_layers: list of fully connected layers
         afunction: function, or list of functions specifying the activation function being used. if
                    not specified, the default is relu
+        out_layer: output layer, for the moment, linear layer
         '''
         self.n_inputs= n_inputs
         self.n_hidden= n_hidden
@@ -276,34 +295,26 @@ class MlpNet(object):
         self.full_layers.append( 
             FullyconnectedLayer( n_inputs, n_hidden[0], 
                                  afunction= self.afunction[0], 
-                                 name= 'full_0'+name) 
+                                 name= '0_full_'+name) 
         )
         for l in range(1,len(n_hidden)):
             self.full_layers.append( 
                 FullyconnectedLayer( n_hidden[l-1], n_hidden[l], 
                                      afunction= self.afunction[l], 
-                                     name= 'full_'+str(l)+name) 
+                                     name= str(l)+'_full_'+name) 
             )
         
         # Create the final layer:
-        self.linear_weights= tf.Variable(
-            tf.truncated_normal( [n_hidden[-1], n_outputs], stddev=0.1),
-            name= 'Wlin_'+name
-        )
+        self.out_layer= LinearLayer( n_hidden[-1], n_outputs, name= '_lin_'+name)
         
-        self.linear_bias = tf.Variable(tf.truncated_normal([n_outputs], stddev=0.1),
-                                name= 'blin_'+name
-                               )
-        
+                
         # 4. Define the saver for the weights of the network
         saver_dict= dict()            
         for l in range(len(self.full_layers)):
-            saver_dict['w'+str(l)+'_full'] = self.full_layers[l].weights
-            saver_dict['b'+str(l)+'_full'] = self.full_layers[l].bias   
-            
-        saver_dict['wlin'] = self.linear_weights
-        saver_dict['blin'] = self.linear_bias
-                
+            saver_dict.update( self.full_layers[l].saver_dict )
+                        
+        saver_dict.update( self.out_layer.saver_dict )
+                        
         self.saver= tf.train.Saver(saver_dict)
         
         
@@ -331,14 +342,15 @@ class MlpNet(object):
                 out = tf.nn.dropout(out, drop_prob)
         
         # 2. linear stage
-        y = tf.matmul(out, self.linear_weights) + self.linear_bias
+        y = self.out_layer.evaluate(out)
         
         # 3. loss
         # l2 regularizer
         l2_reg= 0
         if l2_reg_coef is not None:
             for layer in self.full_layers:
-                l2_reg += tf.nn.l2_loss(layer.weights)
+                l2_reg += tf.nn.l2_loss(layer.weights) 
+            l2_reg += tf.nn.l2_loss(self.out_layer.weights)
             l2_reg = l2_reg_coef*l2_reg
             
         # loss
