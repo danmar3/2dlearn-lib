@@ -342,7 +342,10 @@ class MlpNet(object):
                 out = tf.nn.dropout(out, drop_prob)
         
         # 2. linear stage
-        y = self.out_layer.evaluate(out)
+        if drop_prob is not None:
+            y = self.out_layer.evaluate(tf.nn.dropout(out, drop_prob))
+        else:
+            y = self.out_layer.evaluate(out)
         
         # 3. loss
         # l2 regularizer
