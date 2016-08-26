@@ -1,3 +1,12 @@
+##############################################################################
+# 
+# This file defines some common LSTM network architectures
+#
+# Created by: Daniel L. Marino (marinodl@vcu.edu)
+#
+############################################################################
+
+
 import numpy as np
 import tensorflow as tf
 from Feedforward import LinearLayer 
