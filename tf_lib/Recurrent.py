@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from twodlearn.tf_lib.Feedforward import LinearLayer # TODO: change it when file is copied to 2dlearn-lib
+from Feedforward import LinearLayer 
 
 # TODO: change the saver to be defined layer by layer
 
