@@ -102,7 +102,7 @@ class NetConf(object):
     
     inputs: placeholder for the inputs
     labels: placeholder for the labels
-    y: output of the comptuation graph (logits)
+    y: output of the comptuation graph, ussually a linear map from the last layer (logits)
     loss: loss for the network
     '''
     def __init__(self, inputs, labels, y, loss):
@@ -332,8 +332,7 @@ class MlpNet(object):
             inputs= tf.placeholder( tf.float32, 
                                     shape=(batch_size, self.n_inputs ))
         
-        labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
-                
+                        
         # 1. fully connected stage
         out= inputs
         for layer in self.full_layers:
@@ -359,12 +358,17 @@ class MlpNet(object):
         # loss
         if loss_type is None:
             loss= None
+            labels= None
         elif loss_type=='cross_entropy':
+            labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
+            
             if self.n_outputs==1:
                 loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y, labels)) + l2_reg
             else:
                 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, labels)) + l2_reg
         elif loss_type=='l2':
+            labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
+            
             loss = tf.reduce_mean(tf.nn.l2_loss(y-labels)) + l2_reg
             
         return NetConf(inputs, labels, y, loss)
