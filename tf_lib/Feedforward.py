@@ -107,10 +107,17 @@ class ConvTransposeLayer(object):
     
     The format for stride is:   [stride_dim0, stride_dim1]
     '''
-    def __init__(self, filter_size, n_maps, stride, name=''):
+    def __init__(self, filter_size, n_maps, stride, afunction= None, name=''):
         self.stride= stride
         self.n_in_maps= n_maps[0]
         self.n_out_maps= n_maps[1]
+        
+        
+        if afunction is None:
+            self.afunction= tf.nn.relu
+        else:
+            self.afunction= afunction
+        
         
         self.weights = tf.Variable(
             tf.truncated_normal( [filter_size[0], filter_size[1], n_maps[1], n_maps[0]], stddev=0.1),
@@ -145,7 +152,7 @@ class ConvTransposeLayer(object):
                                         padding= padding
                                        )
         
-        hidden = tf.nn.relu(deconv + self.bias)
+        hidden = self.afunction(deconv + self.bias)
         
         return hidden
     
@@ -749,10 +756,17 @@ class StridedDeconvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
         self.conv_layers.append( 
             ConvTransposeLayer(filter_size[0], [n_input_maps, n_filters[0]], upsampling[0], name= '0_conv_'+name) 
         )
-        for l in range(1,len(n_filters)):
+        for l in range(1,len(n_filters)-1):
             self.conv_layers.append( 
                 ConvTransposeLayer(filter_size[l], [n_filters[l-1], n_filters[l]], upsampling[l], name= str(l)+'_conv_'+name) 
             )
+        
+        # last conv layer has tanh activation function
+        self.conv_layers.append( 
+            ConvTransposeLayer(filter_size[-1], [n_filters[-2], n_filters[-1]], upsampling[-1], 
+                               afunction= tf.tanh, 
+                               name= str(len(n_filters)-1)+'_conv_'+name) 
+        )
         
         # 4. Define the saver for the weights of the network
         saver_dict= dict()
