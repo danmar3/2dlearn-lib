@@ -98,6 +98,61 @@ class StridedConvLayer(object):
 
     
 
+    
+class ConvTransposeLayer(object):
+    '''Creates a "deconvolutional" layer.
+    
+    The format for filter_size is: [filter_size_dim0 , filter_size_dim1], it performs 2D convolution
+    The format for n_maps is:      [num_input_maps, num_output_maps]
+    
+    The format for stride is:   [stride_dim0, stride_dim1]
+    '''
+    def __init__(self, filter_size, n_maps, stride, name=''):
+        self.stride= stride
+        self.n_in_maps= n_maps[0]
+        self.n_out_maps= n_maps[1]
+        
+        self.weights = tf.Variable(
+            tf.truncated_normal( [filter_size[0], filter_size[1], n_maps[1], n_maps[0]], stddev=0.1),
+            name= 'w'+name
+        )
+        
+        self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.1),
+                                name= 'b'+name
+                               )
+        
+        # define the saver dictionary with the training parameters
+        self.saver_dict= dict()
+        self.saver_dict['w'+name] =  self.weights
+        self.saver_dict['b'+name] =  self.bias
+        
+    def evaluate(self, input_tensor, padding= 'SAME'):
+        # Perform Convolution transpose
+        # the layers performs a 2D convolution, with a strides of 1
+        
+        #conv = tf.nn.conv2d(input_tensor, self.weights, strides=[1, self.stride[0], self.stride[1], 1], padding= padding)
+        
+        in_shape= input_tensor.get_shape().as_list()
+        out_shape= [in_shape[0], 
+                    in_shape[1]*self.stride[0],
+                    in_shape[2]*self.stride[1],
+                    self.n_out_maps
+                   ]
+        deconv = tf.nn.conv2d_transpose(input_tensor, 
+                                        self.weights, 
+                                        output_shape= out_shape, 
+                                        strides=[1, self.stride[0], self.stride[1], 1],
+                                        padding= padding
+                                       )
+        
+        hidden = tf.nn.relu(deconv + self.bias)
+        
+        return hidden
+    
+    
+    
+    
+    
 
     
 class FullyconnectedLayer(object):
@@ -268,7 +323,12 @@ class ConvNet(object):
 
             # 3. Create the final layer:
             self.out_layer =  AffineLayer( n_hidden[-1], n_outputs, name= '_lin_'+name)
+        
+        elif (n_outputs is not None):
+            # 3. Create the final layer: (TODO: test this!!!!!!)
+            self.out_layer =  AffineLayer( final_size[0] * final_size[1] * n_filters[-1], n_outputs, name= '_lin_'+name)
             
+        
         # 4. Define the saver for the weights of the network
         saver_dict= dict()
         for l in range(len(self.conv_layers)):
@@ -277,7 +337,7 @@ class ConvNet(object):
         if len(n_hidden)!=0:
             for l in range(len(self.full_layers)):
                 saver_dict.update( self.full_layers[l].saver_dict )               
-                
+        elif (n_outputs is not None):        
             saver_dict.update( self.out_layer.saver_dict )            
         
         self.saver= tf.train.Saver(saver_dict)
@@ -315,7 +375,10 @@ class ConvNet(object):
         out = tf.reshape(out, [shape[0], shape[1] * shape[2] * shape[3]])
         
         # if no fully connected layers, return here:
-        if len(self.n_hidden)==0:
+        if (len(self.n_hidden)==0 and  self.n_outputs is None):
+            return NetConf(inputs, None, out, None)
+        elif len(self.n_hidden)==0: #TODO: check and add loss in this case
+            out = self.out_layer.evaluate(out)
             return NetConf(inputs, None, out, None)
                 
         # 2.2 mlp
@@ -531,9 +594,9 @@ class StridedConvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
         self.out_conv_shape = final_size
         print("Shape of the maps after convolution stage:", self.out_conv_shape)
         
-        # 2. Create the fully connected layers:        
+        # 2. Create the fully connected layers: 
+        self.full_layers= list()
         if len(n_hidden)>0:
-            self.full_layers= list()
             self.full_layers.append( 
                 FullyconnectedLayer( final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name= '0_full_'+name) 
             )
@@ -545,6 +608,12 @@ class StridedConvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
             # 3. Create the final layer:
             self.out_layer =  AffineLayer( n_hidden[-1], n_outputs, name= '_lin_'+name)
             
+        elif (n_outputs is not None):
+            # 3. Create the final layer: (TODO: test this!!!!!!)
+            self.out_layer =  AffineLayer( final_size[0] * final_size[1] * n_filters[-1], n_outputs, name= '_lin_'+name)
+            
+            
+            
         # 4. Define the saver for the weights of the network
         saver_dict= dict()
         for l in range(len(self.conv_layers)):
@@ -553,14 +622,14 @@ class StridedConvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
         if len(n_hidden)!=0:
             for l in range(len(self.full_layers)):
                 saver_dict.update( self.full_layers[l].saver_dict )               
-                
+        elif (n_outputs is not None):   
             saver_dict.update( self.out_layer.saver_dict )            
         
         self.saver= tf.train.Saver(saver_dict)
         
         
         
-    def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None):
+    def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None, inputs= None):
         ''' Defines the computation graph of the neural network for a specific batch size 
         
         drop_prob: placeholder used for specify the probability for dropout. If this coefficient is set, then
@@ -570,8 +639,9 @@ class StridedConvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
                 - 'cross_entropy': for classification tasks
                 - 'l2': for regression tasks
         '''
-        inputs= tf.placeholder( tf.float32, 
-                                shape=(batch_size, self.input_size[0], self.input_size[1], self.n_input_maps ))
+        if inputs is None:
+            inputs= tf.placeholder( tf.float32, 
+                                    shape=(batch_size, self.input_size[0], self.input_size[1], self.n_input_maps ))
         
         if (loss_type is not None) or (len(self.n_hidden)==0):
             labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
@@ -591,8 +661,9 @@ class StridedConvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
         out = tf.reshape(out, [shape[0], shape[1] * shape[2] * shape[3]])
         
         # if no fully connected layers, return here:
-        if len(self.n_hidden)==0:
+        if (len(self.n_hidden)==0 and self.n_outputs is None):
             return NetConf(inputs, None, out, None)
+        
                 
         # 2.2 mlp
         for layer in self.full_layers:
@@ -637,152 +708,88 @@ class StridedDeconvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
     in "UNSUPERVISED REPRESENTATION LEARNING WITH DEEP CONVOLUTIONAL GENERATIVE ADVERSARIAL NETWORKS"
     (http://arxiv.org/pdf/1511.06434v2.pdf)
     
-    First a linear mapping is performed
+    The network maps a vector of size n_inputs to a 2d map with several chanels
     
-    input_size: size of the input maps: [size_dim0, size_dim1]
-    n_outputs: number of outputs
-    n_input_maps: number of input maps
-    n_filters: list with the number of filters for layer
+    First a linear mapping is performed, then a reshape to form an initial tensor of 2d maps with chanels,
+    then a series of upscaling and convolutions are performed
+    
+    n_inputs: size of the input vectors
+    input_size: size of the maps after linear stage: [size_dim0, size_dim1]
+    n_input_maps: number of maps after linear stage
+    n_filters: list with the number of filters for each layer
     filter_size: list with the size of the kernel for each layer, 
                  the format for the size of each layer is: [filter_size_dim0 , filter_size_dim1] 
-    strides: list with the size of the strides for each layer,
-               the format for each layer is: [stride_dim0, stride_dim1]
-    n_hidden: list with the number of units on each fully connected layer
+    upsampling: list with the size for the upsampling in each deconv layer: 
+                [upsampling_dim0, upsampling_dim1]
+        
     
-    out_conv_shape: size of the output map from the convolution stage: [size_dim0, size_dim1]
+    
+    in_layer: input layer, a linear layer for mapping the inputs to the desired output
     
     '''
-    def __init__(self, input_size, n_input_maps, n_outputs, 
+    def __init__(self, n_inputs, input_size, n_input_maps,
                  n_filters, filter_size, 
-                 strides, 
-                 n_hidden= [], 
+                 upsampling, 
                  name=''):
         ''' All variables corresponding to the weights of the network are defined
         '''
-        self.input_size= input_size
-        self.n_input_maps= n_input_maps
-        self.n_outputs= n_outputs
+        self.n_inputs= n_inputs
+        self.input_size= input_size 
+        self.n_input_maps= n_input_maps        
         self.n_filters= n_filters
         self.filter_size= filter_size
-        self.strides= strides
-        self.n_hidden= n_hidden
+        self.upsampling= upsampling
+           
+        # 1. Create the linear layer 
+        self.in_layer= LinearLayer( n_inputs, n_input_maps*input_size[0]*input_size[1], 
+                                    name= '_lin_'+name)
         
-        # 1. Create the convolutional layers:
-        self.conv_layers= list() 
+        # 2. Create the convolutional layers:
+        self.conv_layers= list()
         self.conv_layers.append( 
-            StridedConvLayer(filter_size[0], [n_input_maps, n_filters[0]], strides[0], name= '0_conv_'+name) 
+            ConvTransposeLayer(filter_size[0], [n_input_maps, n_filters[0]], upsampling[0], name= '0_conv_'+name) 
         )
-        
         for l in range(1,len(n_filters)):
             self.conv_layers.append( 
-                StridedConvLayer(filter_size[l], [n_filters[l-1], n_filters[l]], strides[l], name= str(l)+'_conv_'+name) 
+                ConvTransposeLayer(filter_size[l], [n_filters[l-1], n_filters[l]], upsampling[l], name= str(l)+'_conv_'+name) 
             )
         
-        
-        
-        # Get size after convolution phase
-        final_size= [input_size[0], input_size[1]]
-        for i in range(len(filter_size)):
-            final_size[0]= (final_size[0] - (filter_size[i][0]-1))//strides[i][0]
-            final_size[1]= (final_size[1] - (filter_size[i][1]-1))//strides[i][1]
-        
-        if final_size[0]==0:
-            final_size[0]=1
-        if final_size[1]==0:
-            final_size[1]=1
-        self.out_conv_shape = final_size
-        print("Shape of the maps after convolution stage:", self.out_conv_shape)
-        
-        # 2. Create the fully connected layers:        
-        if len(n_hidden)>0:
-            self.full_layers= list()
-            self.full_layers.append( 
-                FullyconnectedLayer( final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name= '0_full_'+name) 
-            )
-            for l in range(1,len(n_hidden)):
-                self.full_layers.append( 
-                    FullyconnectedLayer(n_hidden[l-1], n_hidden[l], name= str(l)+'_full_'+name) 
-                )
-
-            # 3. Create the final layer:
-            self.out_layer =  AffineLayer( n_hidden[-1], n_outputs, name= '_lin_'+name)
-            
         # 4. Define the saver for the weights of the network
         saver_dict= dict()
         for l in range(len(self.conv_layers)):
-            saver_dict.update( self.conv_layers[l].saver_dict )          
-        
-        if len(n_hidden)!=0:
-            for l in range(len(self.full_layers)):
-                saver_dict.update( self.full_layers[l].saver_dict )               
-                
-            saver_dict.update( self.out_layer.saver_dict )            
+            saver_dict.update( self.conv_layers[l].saver_dict )                     
         
         self.saver= tf.train.Saver(saver_dict)
         
         
         
-    def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None):
+    def setup(self, batch_size, drop_prob= None):
         ''' Defines the computation graph of the neural network for a specific batch size 
         
         drop_prob: placeholder used for specify the probability for dropout. If this coefficient is set, then
                    dropout regularization is added between all fully connected layers(TODO: allow to choose which layers)
-        l2_reg_coef: coeficient for l2 regularization
-        loss_type: type of the loss being used for training the network, the options are:
-                - 'cross_entropy': for classification tasks
-                - 'l2': for regression tasks
         '''
         inputs= tf.placeholder( tf.float32, 
-                                shape=(batch_size, self.input_size[0], self.input_size[1], self.n_input_maps ))
-        
-        if (loss_type is not None) or (len(self.n_hidden)==0):
-            labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
-        else:
-            labels= None
+                                shape=(batch_size, self.n_inputs) )
         
         
-        # 1. convolution stage
-        out= inputs
-        for layer in self.conv_layers:
-            out= layer.evaluate(out)
+        # 1. linear stage
+        out = self.in_layer.evaluate(inputs)
                 
-        # 2. fully connected stage
-        # 2.1 reshape
+        # 1.1 reshape
         shape = out.get_shape().as_list()
-        print('Shape of input matrix entering to Fully connected layers:', shape)
-        out = tf.reshape(out, [shape[0], shape[1] * shape[2] * shape[3]])
-        
-        # if no fully connected layers, return here:
-        if len(self.n_hidden)==0:
-            return NetConf(inputs, None, out, None)
+        out = tf.reshape(out, [shape[0], 
+                               self.input_size[0], 
+                               self.input_size[1], 
+                               self.n_input_maps]
+                        )
+               
+        # 2. convolution stage
+        for layer in self.conv_layers:
+            
+            out= layer.evaluate(out, 'SAME')
+                        
+        return NetConf(inputs, None, out, None)
                 
-        # 2.2 mlp
-        for layer in self.full_layers:
-            out = layer.evaluate(out)
-            if drop_prob is not None:
-                out = tf.nn.dropout(out, drop_prob)
         
-        # 3. linear stage
-        y = self.out_layer.evaluate(out)
-        
-        # 4. loss # TODO: add number of parameters to loss so hyperparameters are more easy to tune, also put None as default and do not calculate loss if it is None
-        # l2 regularizer 
-        l2_reg= 0
-        if l2_reg_coef is not None:
-            for layer in self.full_layers:
-                l2_reg += tf.nn.l2_loss(layer.weights)
-            l2_reg = l2_reg_coef*l2_reg
-            
-        # loss
-        if loss_type is None:
-            loss= None
-        elif loss_type=='cross_entropy':
-            if self.n_outputs==1:
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y, labels)) + l2_reg
-            else:
-                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, labels)) + l2_reg
-        elif loss_type=='l2':
-            loss = tf.reduce_mean(tf.nn.l2_loss(y-labels)) + l2_reg
-            
-        return NetConf(inputs, labels, y, loss)
         
