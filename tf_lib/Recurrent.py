@@ -9,7 +9,7 @@
 
 import numpy as np
 import tensorflow as tf
-from Feedforward import LinearLayer 
+from Feedforward import AffineLayer 
 
 # TODO: change the saver to be defined layer by layer
 
@@ -281,7 +281,7 @@ class LstmNet(object):
     def __init__(self, n_inputs, n_nodes, n_outputs, n_extra=0, 
                  afunction= 'tanh', 
                  LstmCell= SimpleLstmCell ,
-                 OutLayer= LinearLayer, 
+                 OutLayer= AffineLayer, 
                  name=''): 
         ''' Define the variables that will represent the learning parameters of the network'''
         # setup inputs and outputs of the network
@@ -541,7 +541,7 @@ class AlexLstmNet(LstmNet):
     def __init__(self, n_inputs, n_nodes, n_outputs, n_extra=0, 
                  afunction= 'tanh', 
                  LstmCell= SimpleLstmCell ,
-                 OutLayer= LinearLayer, 
+                 OutLayer= AffineLayer, 
                  name=''): 
         
         # check n_extra values
@@ -591,7 +591,7 @@ class AlexLstmNet_MemOpt(LstmNet):
     def __init__(self, n_inputs, n_nodes, n_outputs, n_extra=0, 
                  afunction= 'tanh', 
                  LstmCell= SimpleLstmCell ,
-                 OutLayer= LinearLayer, 
+                 OutLayer= AffineLayer, 
                  name=''): 
         
         # check n_extra values
