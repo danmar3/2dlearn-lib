@@ -79,7 +79,7 @@ class StridedConvLayer(object):
             name= 'w'+name
         )
         
-        self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.1),
+        self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.001),
                                 name= 'b'+name
                                )
         
@@ -124,7 +124,7 @@ class ConvTransposeLayer(object):
             name= 'w'+name
         )
         
-        self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.1),
+        self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.001),
                                 name= 'b'+name
                                )
         
