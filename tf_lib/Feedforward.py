@@ -4,7 +4,7 @@
 #      - ConvNet: convolutional neural network
 #      - MlpNet: multilayer perceptron
 #
-# Created by: Daniel L. Marino (daniellml55@gmail.com)
+# Created by: Daniel L. Marino (marinodl@vcu.edu)
 #
 ############################################################################
 
