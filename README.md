@@ -10,7 +10,7 @@ classes and functions for being used on tensorflow
 
 ## installation:
 
- 1. install required packages: Anaconda 3, TensorFlow, CUDA 7.0
+ 1. install required packages: Anaconda 3, TensorFlow, CUDA 7.0, Eigen 3.2
  2. clone the repository: 
     
     mkdir ~/libraries
