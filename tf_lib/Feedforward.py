@@ -1,13 +1,38 @@
-##############################################################################
+#************************************************************************
+#      __   __  _    _  _____   _____
+#     /  | /  || |  | ||     \ /  ___|
+#    /   |/   || |__| ||    _||  |  _
+#   / /|   /| ||  __  || |\ \ |  |_| |
+#  /_/ |_ / |_||_|  |_||_| \_\|______|
+#    
 # 
-# This file defines some common feedforward Neural Network arquitectures:
+#   Written by < Daniel L. Marino (marinodl@vcu.edu) > (2016)
+#
+#   Copyright (2016) Modern Heuristics Research Group (MHRG)
+#   Virginia Commonwealth University (VCU), Richmond, VA
+#   http://www.people.vcu.edu/~mmanic/
+#   
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#  
+#   Any opinions, findings, and conclusions or recommendations expressed 
+#   in this material are those of the author's(s') and do not necessarily 
+#   reflect the views of any other entity.
+#  
+#   ***********************************************************************
+#
+#   Description: This file defines some common feedforward Neural Network arquitectures:
 #      - ConvNet: convolutional neural network
 #      - MlpNet: multilayer perceptron
 #
-# Created by: Daniel L. Marino (marinodl@vcu.edu)
-#
-############################################################################
-
+#   ***********************************************************************
 
 import numpy as np
 import tensorflow as tf
@@ -247,7 +272,7 @@ class NetConf(object):
     def __init__(self, inputs, labels, y, loss):
         self.inputs= inputs
         self.labels= labels
-        self.y= y
+        self.y= y #TODO: change this to out
         self.loss= loss
         
         
@@ -805,5 +830,7 @@ class StridedDeconvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
                         
         return NetConf(inputs, None, out, None)
                 
+        
+
         
         

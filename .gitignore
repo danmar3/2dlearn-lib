@@ -1,6 +1,9 @@
 # checkpoints
 *checkpoint.ipynb
 
+#------ emacs ----
+*~
+
 # ----- data -----
 *.gz
 
