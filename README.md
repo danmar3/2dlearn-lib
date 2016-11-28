@@ -17,8 +17,8 @@ classes and functions for being used on tensorflow
     cd ~/libraries
     git clone https://github.com/danmar3/2dlearn-lib.git twodlearn
 
- 3. add the following environmental variables to your bashrc:
-    export CUDA_HOME="path to cuda toolkit"
-    export EIGEN_HOME="path to eigen installation"
-    export TWODLEARN_HOME="/home/username/libraries/"
+ 3. add the following environmental variables to your bashrc:  
+    export CUDA_HOME="path to cuda toolkit"  
+    export EIGEN_HOME="path to eigen installation"  
+    export TWODLEARN_HOME="/home/username/libraries/"  
     
