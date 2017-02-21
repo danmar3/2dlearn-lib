@@ -22,5 +22,5 @@ classes and functions for being used on tensorflow
     export EIGEN_HOME="path to eigen installation"  
     export TWODLEARN_HOME="/home/username/libraries/"  
     
- 4. add TWODLEARN_HOME to the python path:
+ 4. add TWODLEARN_HOME to the python path: <br>
     export PYTHONPATH="$TWODLEARN_HOME:$PYTHONPATH"
