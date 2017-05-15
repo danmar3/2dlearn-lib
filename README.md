@@ -14,7 +14,9 @@ classes and functions for being used on tensorflow
  2. clone the repository: 
     
     mkdir ~/libraries
+    
     cd ~/libraries
+    
     git clone https://github.com/danmar3/2dlearn-lib.git twodlearn
 
  3. add the following environmental variables to your bashrc:  
