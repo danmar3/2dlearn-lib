@@ -2,7 +2,11 @@ classdef SubtractNode < NetworkNode
     % SubtractNode: node that computes x1 - x2 elementwise. Broadcasting
     %               enabled.
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
 properties ( Access = private )
         bdims_x1
         bdims_x2

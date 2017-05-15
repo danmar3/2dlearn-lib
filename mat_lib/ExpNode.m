@@ -1,7 +1,11 @@
 classdef ExpNode < NetworkNode
     % ExpNode: node that computes the exponential function exp(x)
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         y
     end

@@ -2,7 +2,11 @@ classdef ReduceMeanNode < NetworkNode
     % ReduceMeanNode: node that computes the mean of elements across 
     %                dimensions of a tensor
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
 properties ( Access = private )
         reduce_dims
         size_x

@@ -1,4 +1,11 @@
 classdef NetworkInputPort < handle
+    % Network input port for a node in the computation graph
+    %
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties
         node % 
         name % name of the port's variable

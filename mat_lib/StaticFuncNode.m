@@ -2,7 +2,11 @@ classdef StaticFuncNode < NetworkNode
     % StaticFuncNode: computes an user defined function whose gradient is
     % not back-propagated
     % 
-    % Writted by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         func
         size_x

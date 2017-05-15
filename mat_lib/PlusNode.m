@@ -1,7 +1,11 @@
 classdef PlusNode < NetworkNode
     % PlusNode: element-wise sum between x1 and x2. Broadcast enabled
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         bdims_x1
         bdims_x2

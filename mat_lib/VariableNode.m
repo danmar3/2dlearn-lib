@@ -1,7 +1,11 @@
 classdef VariableNode < NetworkNode
     % variable: node that stores a variable that can be tuned
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         
     end

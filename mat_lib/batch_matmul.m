@@ -6,7 +6,11 @@ function [ y ] = batch_matmul( x1, x2, ind )
 %   [..., r_y, c_y]. The matrix multiplication is performed assuming that
 %   each element indexed by the 1-dim is a matrix
 % 
-% Writted by: Daniel L. Marino (marinodl@vcu.edu)
+% Created by: Daniel L. Marino (marinodl@vcu.edu)
+% Modern Heuristics Research Group (MHRG) 
+% Virginia Commonwealth University (VCU), Richmond, VA 
+% http://www.people.vcu.edu/~mmanic/
+    
 %{
 rank = max(ndims(x1), ndims(x2));
 

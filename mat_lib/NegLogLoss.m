@@ -1,16 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% This file defines a negative loss likelihood 
-%
-% Created by: Daniel L. Marino (marinodl@vcu.edu)
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 classdef NegLogLoss < NetworkNode
-    % Negative log likelihood loss
+    % This file defines a negative loss likelihood 
     %
     % Note: all vectors are asumed to be row vectors
-    % 
+    %
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+
+ 
     properties ( Access = private )
         % y: output loss
         % x: input probabilities

@@ -1,7 +1,11 @@
 classdef MatmulNode < NetworkNode
     % MatmulNode: perform matrix multiplication between x1 and x2
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         x1
         x2

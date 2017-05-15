@@ -2,7 +2,11 @@ classdef GmmLayerDep < GmmModel
     % GmmLayer: layer for a feedforward network with mu, sigma and w as
     %           inputs
     % 
-    % Writted by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties                
         CovType
         n_samples

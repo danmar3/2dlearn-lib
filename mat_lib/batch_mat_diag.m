@@ -6,7 +6,10 @@ function [ y ] = batch_mat_diag( x )
 %   This function was written to match tensorflow's batch_mat_diag function
 %   The input tensor x must have shape [..., diag_elem].
 % 
-% Writted by: Daniel L. Marino (marinodl@vcu.edu)
+% Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+% Modern Heuristics Research Group (MHRG) 
+% Virginia Commonwealth University (VCU), Richmond, VA 
+% http://www.people.vcu.edu/~mmanic/
 
 n_mat = size(x,1);
 n = size(x,2);

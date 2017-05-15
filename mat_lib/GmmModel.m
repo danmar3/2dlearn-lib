@@ -1,16 +1,15 @@
-% GmmModel: gaussian mixture model implementation
-% 
-% Created by: Daniel L. Marino (marinodl@vcu.edu)
-%
-%
-
 classdef GmmModel < NetworkNode
     % The GMM model implemented here is for an independent set of
     % parameters. i.e. mu, sigma and w are supposed to be parameters, not
     % an output from, e.g. a neural network.
     %
     % Note: all vectors are asumed to be row vectors
-    % 
+    %
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties
         % n_dim: number of dimentions of the model
         % n_kernels: number of kernels

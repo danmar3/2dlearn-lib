@@ -2,7 +2,11 @@ classdef SoftmaxCrossentropyWithLogitsNode < NetworkNode
     % Computes the crossentropy between the softmax output and the provided
     % reference
     % 
-    % Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         n_samples
         prob

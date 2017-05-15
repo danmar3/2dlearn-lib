@@ -14,7 +14,10 @@ function mean_err = grad_check(f, n_inputs, n_checks, varargin)
 % Outputs:
 %   - mean_error
 %
-% Wrote by: Daniel L. Marino (marinodl@vcu.edu)
+% Created by: Daniel L. Marino (marinodl@vcu.edu)
+% Modern Heuristics Research Group (MHRG) 
+% Virginia Commonwealth University (VCU), Richmond, VA 
+% http://www.people.vcu.edu/~mmanic/
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

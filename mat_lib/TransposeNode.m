@@ -1,7 +1,11 @@
 classdef TransposeNode < NetworkNode
     % TransposeNode: Permutes the dimensions according to perm.
     % 
-    % Writted by: Daniel L. Marino (marinodl@vcu.edu)
+    % Created by: Daniel L. Marino (marinodl@vcu.edu)
+    % Modern Heuristics Research Group (MHRG) 
+    % Virginia Commonwealth University (VCU), Richmond, VA 
+    % http://www.people.vcu.edu/~mmanic/
+    
     properties ( Access = private )
         perm
         dperm
