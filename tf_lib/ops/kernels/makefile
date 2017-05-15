@@ -17,8 +17,8 @@ LIBS_R =
 
 OBJECTS_R = $(SOURCES:.cpp=.o)
 
-#all: bin_dir my_matmul gmm_model
-all: bin_dir gmm_model
+all: bin_dir my_matmul gmm_model
+#all: bin_dir gmm_model
 
 bin_dir:
 	mkdir -p bin
