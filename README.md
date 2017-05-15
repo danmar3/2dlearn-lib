@@ -26,13 +26,13 @@ classes and functions for being used on tensorflow
     export TWODLEARN_HOME="/home/username/libraries/"  
     
  4. add TWODLEARN_HOME to the python path: <br>
-    export PYTHONPATH="$TWODLEARN_HOME:$PYTHONPATH"
+    export PYTHONPATH="$TWODLEARN_HOME:$PYTHONPATH" 
 
- 6. Compile the tf-lib operations (Not needed for mat-lib)
-    cd tf_lib/ops/kernels
+ 6. Compile the tf-lib operations (Not needed for mat-lib) <br>
+    cd tf_lib/ops/kernels <br>
     make
 
- 5. add the twodlearn/mat-lib path to the start-up Matlab script:
+ 5. add the twodlearn/mat-lib path to the start-up Matlab script: <br>
     addpath('/home/username/libraries/twodlearn/mat_lib/')
 
 
