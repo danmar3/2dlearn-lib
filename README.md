@@ -1,8 +1,5 @@
 # 2D-learn
-2D-learn is a library for machine learning research. The library has two main components: 1) mat-lib, a library for Matlab for numerical optimization; 2) tf-lib, a library for TensorFlow that defines common machine learning models.
-
-## mat-lib:
-A Matlab library inspired by TensorFLow and Torch for numerical optimization using backpropagation. The library defines composite functions using computation graphs, where backpropagation can be used to perform numerical optimization.
+2D-learn is a library for machine learning research. 
 
 ## tf-lib:
 classes and functions for being used on tensorflow
@@ -32,10 +29,7 @@ classes and functions for being used on tensorflow
     cd tf_lib/ops/kernels <br>
     make
 
- 5. add the twodlearn/mat-lib path to the start-up Matlab script: <br>
-    addpath('/home/username/libraries/twodlearn/mat_lib/')
-
-
+ 
 ## Developers:
 
 Daniel L. Marino (marinodl@vcu.edu)
