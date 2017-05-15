@@ -6,7 +6,7 @@
 #  /_/ |_ / |_||_|  |_||_| \_\|______|
 #    
 # 
-#   Written by: Daniel L. Marino (marinodl@vcu.edu) (2016)
+#   Wrote by: Daniel L. Marino (marinodl@vcu.edu) (2016)
 #
 #   Copyright (2016) Modern Heuristics Research Group (MHRG)
 #   Virginia Commonwealth University (VCU), Richmond, VA
@@ -101,17 +101,19 @@ class GmmModel(object):
         #          [sample_id, kernel_id]
         
         if (self.diagonal == True) and (self.method =='tf'):
-            norm_const = tf.inv( tf.sqrt((math.pow(2*np.pi, self.n_dim)) * tf.reduce_prod(sigma, 2))) # shape: [sample_id, kernel_id]
+            #norm_const = tf.inv( tf.sqrt((math.pow(2*np.pi, self.n_dim)) * tf.reduce_prod(sigma, 2))) # shape: [sample_id, kernel_id]
+            norm_const = 1.0/( tf.sqrt((math.pow(2*np.pi, self.n_dim)) * tf.reduce_prod(sigma, 2))) # shape: [sample_id, kernel_id]
             
-            sigma_inv = tf.inv( sigma ) # 1/x element-wise, shape: [sample_id, kernel_id, sigma...]
+            #sigma_inv = tf.inv( sigma ) # 1/x element-wise, shape: [sample_id, kernel_id, sigma...]
+            sigma_inv = 1.0/sigma       # 1/x element-wise, shape: [sample_id, kernel_id, sigma...]
             
             x_mu = tf.reshape(y, [-1, 1, self.n_dim]) - mu # shape: [sample_id, kernel_id, x-mu]
             
-            sigma_inv_x_mu = tf.mul( x_mu, sigma_inv )
+            sigma_inv_x_mu = tf.multiply( x_mu, sigma_inv )
             
-            gaussians = tf.mul( norm_const, tf.exp( -0.5* tf.reduce_sum( x_mu * sigma_inv_x_mu, 2 ) ) ) #[sample_id, kernel_id]
+            gaussians = tf.multiply( norm_const, tf.exp( -0.5* tf.reduce_sum( x_mu * sigma_inv_x_mu, 2 ) ) ) #[sample_id, kernel_id]
                         
-            y = tf.reduce_sum( tf.mul( w, gaussians  ), 1 )
+            y = tf.reduce_sum( tf.multiply( w, gaussians  ), 1 )
 
         elif (self.diagonal == True) and (self.method =='tdl'):
             y,_,_ = tdl.gmm_model(y, w, mu, sigma)
@@ -169,6 +171,56 @@ class GmmLayer(object):
         
         return gmm_out, mu_v, sigma_v, w_v
 
+class GmmSBoundedLayer(object):
+    ''' Defines a GMM layer, which consists of a GmmParamsLayer, and a GmmModelLayer
+    GmmParamsLayer takes unconstrained parameters and transform them into a set of 
+    valid Gmm parameters
+    
+    GmmModelLayer computes the value of the pdf for a given dataset based on the valid
+    set of parameters
+    
+    This layer also implements a gaussian kernel over the inputs, whose reciprocal is
+    used to specify to the network to give us big standard deviations (big uncertainty)
+    on regions of the space that has not been explored. 
+    '''
+    def __init__(self, n_dim, n_kernels= 1, diagonal= True, method= 'tf', name=''):
+        self.n_dim = n_dim
+        self.n_kernels = n_kernels
+        self.diagonal = diagonal
+        
+        self.gmm_params= GmmParamsLayer( n_dim, n_kernels, diagonal)
+        self.gmm_model= GmmModel( n_dim, n_kernels, diagonal, method)
+        
+        self.L_sigma = tf.Variable(tf.truncated_normal( [1, n_dim ], stddev=0.1),
+                                   name= 'gmm_L_sigma'+name
+                                  )
+        
+    def evaluate(self, y, unc_params, x):
+        ''' y: dataset 
+            unc_params: 2d matrix containing the set of unconstrained parameters 
+        '''
+        global global_test
+        # transform parameters to 'valid' parameters
+        mu_v, sigma_v, w_v = self.gmm_params.evaluate( unc_params )
+        
+        # apply gaussian kernel to sigma sigma_v= ( 1/(exp(-|Lx|_p)+t) )*sigma_v
+        #kernel= tf.exp(tf.exp( 
+        #               tf.reduce_sum( tf.pow( tf.mul(self.L_sigma,x), 2.0 ), 1 ) -10.0
+        #              ))
+        kernel = tf.pow( 1.0/( tf.exp(
+                                    -tf.reduce_sum(tf.pow( tf.multiply(self.L_sigma, x), 2.0), 1) 
+                                       )
+                               ) - 1.0
+                        , 6.0)
+                         
+        kernel = tf.reshape(kernel, [-1, 1, 1])
+        global_test = self.L_sigma # DEBUG
+        sigma_v = (kernel) + sigma_v
+        
+        # evaluate the gaussian mixture model using the 'valid' parameters
+        gmm_out = self.gmm_model.evaluate( y, mu_v, sigma_v, w_v )
+                    
+        return gmm_out, mu_v, sigma_v, w_v    
 
         
 class GmmShallowModel(object):
@@ -236,3 +288,42 @@ class GmmMlpModel(object):
         return GmmNetConf(mlp_conf.inputs, labels, out, self.loss_eval(out), mu_v, sigma_v, w_v)
         
         
+class GmmSBoundedMlpModel(object):
+    ''' Defines a GMM model for conditional pdf's, with mu, sigma and w parameters defined by a MLP network
+    The values of sigma are 
+    '''
+    def __init__(self, n_inputs, n_outputs, n_hidden, n_kernels, afunction= None, diagonal=True, name=''):
+        self.n_inputs= n_inputs
+        self.n_outputs= n_outputs
+        self.n_hidden= n_hidden
+        
+        self.n_kernels = n_kernels
+        self.diagonal = diagonal
+        
+        if diagonal==True:
+            self.mlp_model = MlpNet( n_inputs, n_kernels + 2*n_kernels*n_outputs, 
+                                     n_hidden, afunction, name= name+'_FF' )
+
+            self.gmm_layer = GmmSBoundedLayer(n_inputs, n_kernels, diagonal)
+            
+        # TODO: implement non-diagonal convariances
+        
+    def loss_eval(self, net_out):
+        tol= 1e-9
+        return tf.reduce_sum(-tf.log(net_out + tol))
+    
+    def setup(self, batch_size, inputs= None): 
+        
+        labels= tf.placeholder( tf.float32, 
+                                shape=(batch_size, self.n_outputs ))
+        
+        mlp_conf = self.mlp_model.setup(batch_size, inputs= inputs)
+        
+        out, mu_v, sigma_v, w_v = self.gmm_layer.evaluate( labels, mlp_conf.y, mlp_conf.inputs )
+        
+        return GmmNetConf(mlp_conf.inputs, labels, out, self.loss_eval(out), mu_v, sigma_v, w_v)
+        
+        
+
+
+

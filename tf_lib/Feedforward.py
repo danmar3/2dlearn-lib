@@ -189,7 +189,7 @@ class ConvTransposeLayer(object):
     
 class FullyconnectedLayer(object):
     '''Standard fully connected layer'''
-    def __init__(self, n_inputs, n_units, afunction= None, name=''):
+    def __init__(self, n_inputs, n_units, afunction= None, alpha = 1.0, name=''):
         self.n_inputs= n_inputs
         self.n_units= n_units
         
@@ -198,8 +198,29 @@ class FullyconnectedLayer(object):
         else:
             self.afunction= afunction
         
-        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
-        self.bias= tf.Variable(tf.truncated_normal([n_units], stddev=0.1), name= 'b'+name)
+        # weight initialization
+        self.init = 'frob'
+        if self.init == 'frob':
+            alpha = 5.0
+            sigma = np.sqrt((alpha*alpha)/(n_inputs*n_units))
+        elif self.init == 'sum':
+            alpha = 1.0
+            sigma = np.sqrt((alpha*alpha)/(n_inputs + n_units))
+        elif self.init == 'max':    
+            alpha = 1.0
+            M = max(n_inputs, n_units)
+            sigma = np.sqrt(alpha/M)
+        elif self.init == 'singular':
+            alpha = 1.0
+            N = min(n_inputs, n_units)
+            M = max(n_inputs, n_units)
+            t = (N-1)/(M-1)
+            t = 1 - np.exp(-10*t)
+            alpha = np.sqrt(np.minimum(N,M) * (alpha* ((1-t) + 0.3*t) )) 
+            sigma = np.sqrt((alpha**2)/(N*M))  
+        
+        self.weights= tf.Variable(tf.random_normal([n_inputs, n_units], stddev = sigma), name= 'W'+name)
+        self.bias= tf.Variable(tf.zeros([n_units]), name= 'b'+name)
         
         # define the saver dictionary with the training parameters
         self.saver_dict= dict()
@@ -218,12 +239,33 @@ class FullyconnectedLayer(object):
 
 class AffineLayer(object):
     '''Standard affine (W*X+b) fully connected layer'''
-    def __init__(self, n_inputs, n_units, name=''):
+    def __init__(self, n_inputs, n_units, alpha = 1.0, name=''):
         self.n_inputs= n_inputs
         self.n_units= n_units
+        self.init = 'max'
         
-        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
-        self.bias= tf.Variable(tf.truncated_normal([n_units], stddev=0.1), name= 'b'+name)
+        if self.init == 'frob':
+            alpha = 5.0
+            sigma = np.sqrt((alpha*alpha)/(n_inputs*n_units))
+        elif self.init == 'sum':
+            alpha = 1.0
+            sigma = np.sqrt((alpha*alpha)/(n_inputs + n_units))
+        elif self.init == 'max':    
+            alpha = 1.0
+            M = max(n_inputs, n_units)
+            sigma = np.sqrt(alpha/M)
+        elif self.init == 'singular':
+            alpha = 1.0
+            N = min(n_inputs, n_units)
+            M = max(n_inputs, n_units)
+            t = (N-1)/(M-1)
+            t = 1 - np.exp(-10*t)
+            alpha = np.sqrt(np.minimum(N,M) * (alpha* ((1-t) + 0.3*t) )) 
+            sigma = np.sqrt((alpha**2)/(N*M))  
+        
+            
+        self.weights= tf.Variable(tf.random_normal([n_inputs, n_units], stddev = sigma), name= 'W'+name)
+        self.bias= tf.Variable(tf.zeros([n_units]), name= 'b'+name)
         
         # define the saver dictionary with the training parameters
         self.saver_dict= dict()
@@ -239,12 +281,14 @@ class AffineLayer(object):
     
 class LinearLayer(object):
     '''Standard linear (W*X) fully connected layer'''
-    def __init__(self, n_inputs, n_units, name=''):
+    def __init__(self, n_inputs, n_units, alpha = 5.0, name=''):
         self.n_inputs= n_inputs
         self.n_units= n_units
         
-        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
-                
+        #self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
+        sigma = np.sqrt((alpha*alpha)/(n_inputs + n_units))
+        self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=sigma), name= 'W'+name)
+        
         # define the saver dictionary with the training parameters
         self.saver_dict= dict()
         self.saver_dict['w'+name] =  self.weights
@@ -503,7 +547,7 @@ class MlpNet(object):
         self.saver= tf.train.Saver(saver_dict)
         
         
-    def setup(self, batch_size, drop_prob= None, l2_reg_coef= None, loss_type= None, inputs= None):
+    def setup(self, batch_size= None, drop_prob= None, l2_reg_coef= None, loss_type= None, inputs= None):
         ''' Defines the computation graph of the neural network for a specific batch size 
         
         drop_prob: placeholder used for specify the probability for dropout. If this coefficient is set, then
@@ -513,6 +557,7 @@ class MlpNet(object):
                 - 'cross_entropy': for classification tasks
                 - 'l2': for regression tasks
         '''
+        
         if inputs is None:
             inputs= tf.placeholder( tf.float32, 
                                     shape=(batch_size, self.n_inputs ))

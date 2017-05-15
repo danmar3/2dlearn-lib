@@ -1,15 +1,41 @@
-##############################################################################
+#************************************************************************
+#      __   __  _    _  _____   _____
+#     /  | /  || |  | ||     \ /  ___|
+#    /   |/   || |__| ||    _||  |  _
+#   / /|   /| ||  __  || |\ \ |  |_| |
+#  /_/ |_ / |_||_|  |_||_| \_\|______|
+#    
 # 
-# This file defines some common LSTM network architectures
+#   Written by < Daniel L. Marino (marinodl@vcu.edu) > (2016)
 #
-# Created by: Daniel L. Marino (marinodl@vcu.edu)
+#   Copyright (2016) Modern Heuristics Research Group (MHRG)
+#   Virginia Commonwealth University (VCU), Richmond, VA
+#   http://www.people.vcu.edu/~mmanic/
+#   
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
 #
-############################################################################
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#  
+#   Any opinions, findings, and conclusions or recommendations expressed 
+#   in this material are those of the author's(s') and do not necessarily 
+#   reflect the views of any other entity.
+#  
+#   ***********************************************************************
+#
+#   Description: This file defines some common LSTM network architectures
+#
+#   ***********************************************************************
 
 
 import numpy as np
 import tensorflow as tf
-from Feedforward import AffineLayer 
+from twodlearn.tf_lib.Feedforward import AffineLayer 
 
 # TODO: change the saver to be defined layer by layer
 
@@ -586,7 +612,7 @@ class AlexLstmNet(LstmNet):
         return self.out_layer.evaluate(tf.concat(0, all_hidden))  
         
         
-class AlexLstmNet_MemOpt(LstmNet):
+class AlexLstmNet_MemOpt(LstmNet): #TODO
     
     def __init__(self, n_inputs, n_nodes, n_outputs, n_extra=0, 
                  afunction= 'tanh', 
