@@ -15,12 +15,9 @@ classes and functions for being used on tensorflow
 
  1. required packages for tf-lib: Anaconda 3, TensorFlow, CUDA 7.0, Eigen 3.2
     
- 2. clone the repository: 
-    
-    mkdir ~/libraries
-    
-    cd ~/libraries
-    
+ 2. clone the repository: <br>    
+    mkdir ~/libraries <br>    
+    cd ~/libraries <br>    
     git clone https://github.com/danmar3/2dlearn-lib.git twodlearn
 
  3. add the following environmental variables to your bashrc:  
@@ -43,6 +40,6 @@ classes and functions for being used on tensorflow
 
 Daniel L. Marino (marinodl@vcu.edu)
 
-Modern Heuristics Research Group (MHRG)
-Virginia Commonwealth University (VCU), Richmond, VA
+Modern Heuristics Research Group (MHRG) <br>
+Virginia Commonwealth University (VCU), Richmond, VA <br>
 http://www.people.vcu.edu/~mmanic/
