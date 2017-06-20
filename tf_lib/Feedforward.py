@@ -593,9 +593,9 @@ class MlpNet(object):
             labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
             
             if self.n_outputs==1:
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y, labels)) + l2_reg
+                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = labels, logits = y)) + l2_reg
             else:
-                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, labels)) + l2_reg
+                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = labels, logits = y)) + l2_reg
         elif loss_type=='l2':
             labels= tf.placeholder( tf.float32, shape=(batch_size, self.n_outputs))
             
