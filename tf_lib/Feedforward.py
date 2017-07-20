@@ -34,19 +34,20 @@ class AlexnetLayer(object):
     def __init__(self, filter_size, n_maps, pool_size, name=''):
         self.pool_size = pool_size
         self.weights = tf.Variable(
-            tf.truncated_normal(
-                [filter_size[0], filter_size[1], n_maps[0], n_maps[1]], stddev=0.1),
-            name='w' + name
-        )
+            tf.truncated_normal([filter_size[0],
+                                 filter_size[1],
+                                 n_maps[0],
+                                 n_maps[1]],
+                                stddev=0.1),
+            name=name + '/W')
 
         self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.1),
-                                name='b' + name
-                                )
+                                name=name + '/b')
 
         # define the saver dictionary with the training parameters
         self.saver_dict = dict()
-        self.saver_dict['w' + name] = self.weights
-        self.saver_dict['b' + name] = self.bias
+        self.saver_dict[name + '/W'] = self.weights
+        self.saver_dict[name + '/b'] = self.bias
 
     def evaluate(self, input_tensor):
         # Perform Convolution
@@ -86,17 +87,15 @@ class StridedConvLayer(object):
         self.weights = tf.Variable(
             tf.truncated_normal(
                 [filter_size[0], filter_size[1], n_maps[0], n_maps[1]], stddev=0.1),
-            name='w' + name
-        )
+            name=name + '/W')
 
         self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.001),
-                                name='b' + name
-                                )
+                                name=name + '/b')
 
         # define the saver dictionary with the training parameters
         self.saver_dict = dict()
-        self.saver_dict['w' + name] = self.weights
-        self.saver_dict['b' + name] = self.bias
+        self.saver_dict[name + '/W'] = self.weights
+        self.saver_dict[name + '/b'] = self.bias
 
     def evaluate(self, input_tensor, padding='VALID'):
         # Perform Convolution
@@ -133,17 +132,15 @@ class ConvTransposeLayer(object):
         self.weights = tf.Variable(
             tf.truncated_normal(
                 [filter_size[0], filter_size[1], n_maps[1], n_maps[0]], stddev=0.1),
-            name='w' + name
-        )
+            name=name + '/W')
 
         self.bias = tf.Variable(tf.truncated_normal([n_maps[1]], stddev=0.001),
-                                name='b' + name
-                                )
+                                name=name + '/b')
 
         # define the saver dictionary with the training parameters
         self.saver_dict = dict()
-        self.saver_dict['w' + name] = self.weights
-        self.saver_dict['b' + name] = self.bias
+        self.saver_dict[name + '/W'] = self.weights
+        self.saver_dict[name + '/b'] = self.bias
 
     def evaluate(self, input_tensor, padding='SAME'):
         # Perform Convolution transpose
@@ -204,13 +201,13 @@ class FullyconnectedLayer(object):
             sigma = np.sqrt((alpha**2) / (N * M))
 
         self.weights = tf.Variable(tf.random_normal(
-            [n_inputs, n_units], stddev=sigma), name='W' + name)
-        self.bias = tf.Variable(tf.zeros([n_units]), name='b' + name)
+            [n_inputs, n_units], stddev=sigma), name=name + '/W')
+        self.bias = tf.Variable(tf.zeros([n_units]), name=name + '/b')
 
         # define the saver dictionary with the training parameters
         self.saver_dict = dict()
-        self.saver_dict['w' + name] = self.weights
-        self.saver_dict['b' + name] = self.bias
+        self.saver_dict[name + '/W'] = self.weights
+        self.saver_dict[name + '/b'] = self.bias
 
     def evaluate(self, input_mat):
         return self.afunction(tf.matmul(input_mat, self.weights) + self.bias)
@@ -244,13 +241,13 @@ class AffineLayer(object):
             sigma = np.sqrt((alpha**2) / (N * M))
 
         self.weights = tf.Variable(tf.random_normal(
-            [n_inputs, n_units], stddev=sigma), name='W' + name)
-        self.bias = tf.Variable(tf.zeros([n_units]), name='b' + name)
+            [n_inputs, n_units], stddev=sigma), name=name + '/W')
+        self.bias = tf.Variable(tf.zeros([n_units]), name=name + '/b')
 
         # define the saver dictionary with the training parameters
         self.saver_dict = dict()
-        self.saver_dict['w' + name] = self.weights
-        self.saver_dict['b' + name] = self.bias
+        self.saver_dict[name + '/W'] = self.weights
+        self.saver_dict[name + '/b'] = self.bias
 
     def evaluate(self, input_mat):
         return tf.matmul(input_mat, self.weights) + self.bias
@@ -266,27 +263,28 @@ class LinearLayer(object):
         #self.weights= tf.Variable(tf.truncated_normal([n_inputs, n_units], stddev=0.1), name= 'W'+name)
         sigma = np.sqrt((alpha * alpha) / (n_inputs + n_units))
         self.weights = tf.Variable(tf.truncated_normal(
-            [n_inputs, n_units], stddev=sigma), name='W' + name)
+            [n_inputs, n_units], stddev=sigma), name=name + '/W')
 
         # define the saver dictionary with the training parameters
         self.saver_dict = dict()
-        self.saver_dict['w' + name] = self.weights
+        self.saver_dict[name + '/W'] = self.weights
 
     def evaluate(self, input_mat):
         return tf.matmul(input_mat, self.weights)
 
 
-''' -------------------------------------------- Networks --------------------------------------------- '''
+''' ----------------------------- Networks -------------------------------- '''
 
 
 class NetConf(object):
-    '''This is a wrapper to any network configuration, it contains the references to
-    the placeholders for inputs and labels, and the reference of the computation graph for 
-    the network
+    '''This is a wrapper to any network configuration, it contains the
+    references to the placeholders for inputs and labels, and the
+    reference of the computation graph for the network
 
     inputs: placeholder for the inputs
     labels: placeholder for the labels
-    y: output of the comptuation graph, ussually a linear map from the last layer (logits)
+    y: output of the comptuation graph, ussually a linear map
+       from the last layer (logits)
     loss: loss for the network
     '''
 
@@ -339,14 +337,17 @@ class ConvNet(object):
         # 1. Create the convolutional layers:
         self.conv_layers = list()
         self.conv_layers.append(
-            AlexnetLayer(filter_size[0], [
-                         n_input_maps, n_filters[0]], pool_size[0], name='0_conv_' + name)
-        )
+            AlexnetLayer(filter_size[0],
+                         [n_input_maps, n_filters[0]],
+                         pool_size[0],
+                         name=name + '/conv_0'))
 
         for l in range(1, len(n_filters)):
             self.conv_layers.append(
-                AlexnetLayer(filter_size[l], [
-                             n_filters[l - 1], n_filters[l]], pool_size[l], name=str(l) + '_conv_' + name)
+                AlexnetLayer(filter_size[l],
+                             [n_filters[l - 1], n_filters[l]],
+                             pool_size[l],
+                             name=name + '/conv_' + str(l))
             )
 
         # Get size after convolution phase
@@ -368,23 +369,26 @@ class ConvNet(object):
         if len(n_hidden) > 0:
             self.full_layers = list()
             self.full_layers.append(
-                FullyconnectedLayer(
-                    final_size[0] * final_size[1] * n_filters[-1], n_hidden[0], name='0_full_' + name)
-            )
+                FullyconnectedLayer(final_size[0] * final_size[1] * n_filters[-1],
+                                    n_hidden[0],
+                                    name=name + '/full_0'))
             for l in range(1, len(n_hidden)):
                 self.full_layers.append(
-                    FullyconnectedLayer(
-                        n_hidden[l - 1], n_hidden[l], name=str(l) + '_full_' + name)
+                    FullyconnectedLayer(n_hidden[l - 1],
+                                        n_hidden[l],
+                                        name=name + '/full_' + str(l))
                 )
 
             # 3. Create the final layer:
             self.out_layer = AffineLayer(
-                n_hidden[-1], n_outputs, name='_lin_' + name)
+                n_hidden[-1], n_outputs, name=name + '/lin')
 
         elif (n_outputs is not None):
             # 3. Create the final layer: (TODO: test this!!!!!!)
-            self.out_layer = AffineLayer(
-                final_size[0] * final_size[1] * n_filters[-1], n_outputs, name='_lin_' + name)
+            self.out_layer = \
+                AffineLayer(final_size[0] * final_size[1] * n_filters[-1],
+                            n_outputs,
+                            name=name + '/lin')
 
         # 4. Define the saver for the weights of the network
         saver_dict = dict()
@@ -400,12 +404,16 @@ class ConvNet(object):
         self.saver = tf.train.Saver(saver_dict)
 
     def setup(self, batch_size, drop_prob=None, l2_reg_coef=None, loss_type=None):
-        ''' Defines the computation graph of the neural network for a specific batch size 
+        ''' Defines the computation graph of the neural network for a specific
+        batch size
 
-        drop_prob: placeholder used for specify the probability for dropout. If this coefficient is set, then
-                   dropout regularization is added between all fully connected layers(TODO: allow to choose which layers)
+        drop_prob: placeholder used for specify the probability for dropout.
+                   If this coefficient is set, then dropout regularization is
+                   added between all fully connected layers
+                   (TODO: allow to choose which layers)
         l2_reg_coef: coeficient for l2 regularization
-        loss_type: type of the loss being used for training the network, the options are:
+        loss_type: type of the loss being used for training the network,
+                   the options are:
                 - 'cross_entropy': for classification tasks
                 - 'l2': for regression tasks
         '''
@@ -502,18 +510,18 @@ class MlpNet(object):
         self.full_layers.append(
             FullyconnectedLayer(n_inputs, n_hidden[0],
                                 afunction=self.afunction[0],
-                                name='0_full_' + name)
+                                name=name + '/full_0')
         )
         for l in range(1, len(n_hidden)):
             self.full_layers.append(
                 FullyconnectedLayer(n_hidden[l - 1], n_hidden[l],
                                     afunction=self.afunction[l],
-                                    name=str(l) + '_full_' + name)
+                                    name=name + '/full_' + str(l))
             )
 
         # Create the final layer:
         self.out_layer = AffineLayer(
-            n_hidden[-1], n_outputs, name='_lin_' + name)
+            n_hidden[-1], n_outputs, name=name + '/affine')
 
         # 4. Define the saver for the weights of the network
         saver_dict = dict()
@@ -813,27 +821,32 @@ class StridedDeconvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
         self.upsampling = upsampling
 
         # 1. Create the linear layer
-        self.in_layer = LinearLayer(n_inputs, n_input_maps * input_size[0] * input_size[1],
-                                    name='_lin_' + name)
+        self.in_layer = \
+            LinearLayer(n_inputs,
+                        n_input_maps * input_size[0] * input_size[1],
+                        name=name + '/lin')
 
         # 2. Create the convolutional layers:
         self.conv_layers = list()
         self.conv_layers.append(
-            ConvTransposeLayer(filter_size[0], [
-                               n_input_maps, n_filters[0]], upsampling[0], name='0_conv_' + name)
-        )
+            ConvTransposeLayer(filter_size[0],
+                               [n_input_maps, n_filters[0]],
+                               upsampling[0],
+                               name=name + '/conv_0'))
         for l in range(1, len(n_filters) - 1):
             self.conv_layers.append(
-                ConvTransposeLayer(filter_size[l], [
-                                   n_filters[l - 1], n_filters[l]], upsampling[l], name=str(l) + '_conv_' + name)
-            )
+                ConvTransposeLayer(filter_size[l],
+                                   [n_filters[l - 1], n_filters[l]],
+                                   upsampling[l],
+                                   name=name + '/conv_' + str(l)))
 
         # last conv layer has tanh activation function
         self.conv_layers.append(
-            ConvTransposeLayer(filter_size[-1], [n_filters[-2], n_filters[-1]], upsampling[-1],
+            ConvTransposeLayer(filter_size[-1],
+                               [n_filters[-2], n_filters[-1]],
+                               upsampling[-1],
                                afunction=tf.tanh,
-                               name=str(len(n_filters) - 1) + '_conv_' + name)
-        )
+                               name=name + '/conv_' + str(len(n_filters) - 1)))
 
         # 4. Define the saver for the weights of the network
         saver_dict = dict()
