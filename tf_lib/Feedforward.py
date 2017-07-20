@@ -530,6 +530,7 @@ class MlpNet(object):
 
         saver_dict.update(self.out_layer.saver_dict)
 
+        self.parameters = saver_dict
         self.saver = tf.train.Saver(saver_dict)
 
     def setup(self, batch_size=None, drop_prob=None, l2_reg_coef=None,
@@ -710,6 +711,7 @@ class StridedConvNet(object):   # TODO!!!!!!!!!!!!!!!!!!!
         elif (n_outputs is not None):
             saver_dict.update(self.out_layer.saver_dict)
 
+        self.parameters = saver_dict
         self.saver = tf.train.Saver(saver_dict)
 
     def setup(self, batch_size, drop_prob=None, l2_reg_coef=None, loss_type=None, inputs=None):
