@@ -16,6 +16,13 @@ import numpy as np
 import tensorflow as tf
 
 
+class Options:
+    def __init__(self, weight_initialization):
+        self.weight_initialization = weight_initialization
+
+
+options = Options(weight_initialization='frob')
+
 ''' -------------------------------- Layers ------------------------------- '''
 
 
@@ -180,7 +187,7 @@ class FullyconnectedLayer(object):
             self.afunction = afunction
 
         # weight initialization
-        self.init = 'frob'
+        self.init = options.weight_initialization
         if self.init == 'frob':
             alpha = 5.0
             sigma = np.sqrt((alpha * alpha) / (n_inputs * n_units))
@@ -219,7 +226,7 @@ class AffineLayer(object):
     def __init__(self, n_inputs, n_units, alpha=1.0, name=''):
         self.n_inputs = n_inputs
         self.n_units = n_units
-        self.init = 'max'
+        self.init = options.weight_initialization
 
         if self.init == 'frob':
             alpha = 5.0
